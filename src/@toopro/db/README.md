@@ -72,7 +72,21 @@ Or process `string` errors returned __instead of objects__. See more details in 
 2. Build 'esm' version (it will be stored to esm folder and 'module' link to that folders is already in package.json)
 3. Release publish to npm
 
+## Local dev faster
+use `npm link` to link local version of the package to your project, 
+so you can test it without publishing to npm.
+Algo:
+1. `npm run build` to build the package
+2. `npm link` to link the package globally
+3. `cd your-project` and `npm link @toopro/db` to link the package to your project
+4. `npm run start` to start your project with linked package
+
+When done, you can unlink the package with `npm unlink @toopro/db`
+in your project and `npm unlink` in the package folder.
+
+
 ## release notes
+- 0.1.56 - refactor: update types and improve platform detection logic
 - 0.1.53 - ESM only try with nestjs too on node22
 - 0.1.51 - Fix build errors under strict TypeScript settings.
 - 0.1.50 - allow auth mode change to directus, publish to npm

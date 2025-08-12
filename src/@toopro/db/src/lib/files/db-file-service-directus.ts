@@ -105,7 +105,7 @@ export class DB_FileService_Directus implements I_DB_FilesService<I_DB_File> {
    * @private
    * @return formData with 'file' populated with converted contents data
    */
-  private static async contentsToFormData(contents:any, formData?:FormData) {
+  private static async contentsToFormData(contents:any, formData?:IFormData) {
     let data = (typeof contents === 'object') ? JSON.stringify(contents) : contents;
     const response = await platformAPI.createResponse(data);
     const blob = await response.blob();

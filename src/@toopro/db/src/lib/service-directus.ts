@@ -31,6 +31,7 @@ import { DB_EntityService_Base } from './service-base.js';
 import { DB_EntityBase } from './types/db-entity-base.js';
 import { DB_Error, DB_ErrorLevel } from './types/db.error.js';
 import { DB_EntityService_Options } from './types/service-options.interface.js';
+import {platformAPI, platformIsBrowser} from "./utils/platform-api.js";
 
 /**
  * Directus SDK: specific implementation of the DB_EntityServiceBase,
@@ -121,7 +122,11 @@ export abstract class DB_EntityServiceBase_Directus<T extends DB_EntityBase<obje
       credentials = {login:srv.login, password:srv.password, token:srv.token};
     }
 
-    const authMode = credentials.options?.auth_mode || this.AUTH_MODE;
+    //'json' | 'cookie' | 'session' depend on environment.
+    //if we see that we are in browser - use 'cookie' auth mode
+    //if we are in Node.js - use 'json' auth mode
+    let authMode:AuthenticationMode = platformIsBrowser ? 'cookie' : 'json';
+    if(credentials.options?.auth_mode) authMode = credentials.options.auth_mode;
 
     //if we are not logged in - try to log in and tell that we are waiting
     srv.broker.upsertServer(srv.name, {isLoggedIn:IsLoginStatus.waiting});

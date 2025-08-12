@@ -1,18 +1,18 @@
 {
   "name": "@toopro/db",
-  "version": "0.1.54",
+  "version": "0.1.56",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    "./package.json": "./package.json",
     ".": {
-      "development": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
       "default": "./dist/index.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "files": [
     "dist",
@@ -22,7 +22,7 @@
     "name": "db"
   },
   "dependencies": {
-    "@toopro/utils": "^0.1.2",
+    "@toopro/utils": "^0.1.3",
     "@directus/sdk": "^20.0.0",
     "tslib": "^2.3.0"
   },

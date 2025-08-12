@@ -93,11 +93,11 @@ class NodePlatformAPI implements IPlatformAPI {
 }
 
 // Определяем платформу, используя globalThis
-const isBrowser = typeof (globalThis as any).window !== 'undefined' &&
+export const platformIsBrowser = typeof (globalThis as any).window !== 'undefined' &&
                   !!(globalThis as any).window &&
                   !!(globalThis as any).window.FormData;
 
 // Создаем экземпляр API в зависимости от окружения
-export const platformAPI: IPlatformAPI = isBrowser
+export const platformAPI: IPlatformAPI = platformIsBrowser
   ? new BrowserPlatformAPI()
   : new NodePlatformAPI();
