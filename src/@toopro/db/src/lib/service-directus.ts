@@ -1,37 +1,37 @@
-import { I_DB_EntityServiceBase } from './types/service-base.interface.js';
+import {I_DB_EntityServiceBase} from './types/service-base.interface.js';
 import {
-  authentication,
-  AuthenticationData,
-  AuthenticationMode,
-  createDirectus,
-  createItem,
-  createItems,
-  deleteItem,
-  deleteItems,
-  readFiles,
-  readItems,
-  readMe,
-  readRoles,
-  rest,
-  UnpackList,
-  updateItem,
-  updateItems
+    authentication,
+    AuthenticationData,
+    AuthenticationMode,
+    createDirectus,
+    createItem,
+    createItems,
+    deleteItem,
+    deleteItems,
+    readFiles,
+    readItems,
+    readMe,
+    readRoles,
+    rest,
+    UnpackList,
+    updateItem,
+    updateItems
 } from '@directus/sdk';
 import {
-  DB_Credentials,
-  DB_EntityID,
-  DB_ServerInfo_Directus,
-  DB_VerboseLevel,
-  DBtype,
-  IsLoginStatus
+    DB_Credentials,
+    DB_EntityID,
+    DB_ServerInfo_Directus,
+    DB_VerboseLevel,
+    DBtype,
+    IsLoginStatus
 } from './types/types.js';
-import { DB_BrokerService } from './broker.service.js';
-import { DB_Query, DB_QueryBuilder, I_DB_Query, I_DB_Query_Directus } from './types/query.type.js';
-import { DB_EntityService_Base } from './service-base.js';
-import { DB_EntityBase } from './types/db-entity-base.js';
-import { DB_Error, DB_ErrorLevel } from './types/db.error.js';
-import { DB_EntityService_Options } from './types/service-options.interface.js';
-import {platformAPI, platformIsBrowser} from "./utils/platform-api.js";
+import {DB_BrokerService} from './broker.service.js';
+import {DB_Query, DB_QueryBuilder, I_DB_Query, I_DB_Query_Directus} from './types/query.type.js';
+import {DB_EntityService_Base} from './service-base.js';
+import {DB_EntityBase} from './types/db-entity-base.js';
+import {DB_Error, DB_ErrorLevel} from './types/db.error.js';
+import {DB_EntityService_Options} from './types/service-options.interface.js';
+import {platformIsBrowser} from "./utils/platform-api.js";
 
 /**
  * Directus SDK: specific implementation of the DB_EntityServiceBase,
@@ -352,7 +352,7 @@ export abstract class DB_EntityServiceBase_Directus<T extends DB_EntityBase<obje
 
   //----------------------------------------------------------------------------
 
-  async upsert(entityWithId:Partial<T>):Promise<T|string|undefined> {
+  async upsert(entityWithId:Partial<T>):Promise<T|string> {
     if(this.readonly) return this.retErrorString(new DB_Error(`[tps/db] ${this.entityName} is readonly`,this.entityName,'',DB_ErrorLevel.WARNING));
     let res:T|string|undefined; let wasUpdatedOK = false; this.lastErrorReset();
 
@@ -363,7 +363,7 @@ export abstract class DB_EntityServiceBase_Directus<T extends DB_EntityBase<obje
       if(typeof res === 'object') wasUpdatedOK = true;
     } catch(e) {
       wasUpdatedOK = false;
-      if(this.errorsToConsole) console.warn(`[tps/db upsert] update error ${this.entityName}:${id}, try add:`, e);
+      if(this.errorsToConsole && this.verboseLevel >= DB_VerboseLevel.DEBUG) console.warn(`[tps/db upsert] update error ${this.entityName}:${id}, try add:`, e);
     }
 
     //if we have error - try to add
@@ -374,7 +374,8 @@ export abstract class DB_EntityServiceBase_Directus<T extends DB_EntityBase<obje
     if(res) await this._query_post_process( res[this.idFieldName] as any, [res] );
     //if(res && this.cache) this.cacheSet(res);//ALREADY UPDATED IN queue post process
 
-    return res;
+    if(!res) return this.retErrorString(new DB_Error(`[tps/db] ${this.entityName} upsert cant update and add. what is wrong?`+res,this.entityName,'',DB_ErrorLevel.ERROR, entityWithId));
+    else return res;
   }
 
   //----------------------------------------------------------------------------

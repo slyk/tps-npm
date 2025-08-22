@@ -399,7 +399,7 @@ export abstract class DB_EntityService_Base<T extends Record<string, any>> exten
   abstract batchDelete(query:I_DB_Query<T>|DB_QueryBuilder<T>):Promise<boolean|string>;
   abstract logout(): Promise<IsLoginStatus>;
   abstract update(updates: Partial<T>, id?: DB_EntityID): Promise<string | T>;
-  abstract upsert(entityWithId: Partial<T>): Promise<string | T | undefined>;
+  abstract upsert(entityWithId: Partial<T>): Promise<string | T >;
   abstract batchUpdate(updates: Partial<T>, ids: DB_EntityID[], skipPostProcess?: boolean): Promise<T[] | string>;
 
   /**

@@ -253,12 +253,19 @@ export interface I_DB_EntityServiceBase<T> extends DB_EntityService_Options {
   update(updates:Partial<T>, id?:DB_EntityID):Promise<T|string>,
 
   /**
-   * add or update item by ID
+   * Add or update item by ID
+   *
+   * **For directus:**
+   * SDK don't have actual upsert(), so system will try to update item by ID,
+   * and on fail will try to add() new item.
+   * Will report to console that the update failed before making add() if DB_VerboseLevel is set to DEBUG
+   *
    * @param entityWithId
    * @return updated item or error string
    * @throws DB_Error if something went wrong and ✓`throwErrors`
+   * @see DB_VerboseLevel
    */
-  upsert(entityWithId:Partial<T>):Promise<T|string|undefined>,
+  upsert(entityWithId:Partial<T>):Promise<T|string>,
 
   /**
    * Update ALL entities with `ids` with the SAME data from `updates` object.
