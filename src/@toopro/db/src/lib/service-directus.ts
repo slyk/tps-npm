@@ -98,7 +98,7 @@ export abstract class DB_EntityServiceBase_Directus<T extends DB_EntityBase<obje
   static override async loginToServer(toServer:DB_ServerInfo_Directus, credentials?:DB_Credentials & {options?:{auth_mode:AuthenticationMode}}):Promise<IsLoginStatus> {
     const srv = toServer;  if(!srv) return IsLoginStatus.error;
     if(srv.isLoggedIn > IsLoginStatus.ndef) return srv.isLoggedIn;
-    console.log('login to server:', srv.name, srv.isLoggedIn, ' service: ', srv.name);
+    console.log('login to server:', srv.name, srv.isLoggedIn, ' login: ', credentials?.login);
 
     //if we are already waiting for login - wait some ms and check again
     if(srv.isLoggedIn === IsLoginStatus.waiting) {
@@ -161,7 +161,7 @@ export abstract class DB_EntityServiceBase_Directus<T extends DB_EntityBase<obje
       }
     //ELSE we can't login without token or login/password:
     } else {
-      console.warn('no token or login/password is set for server:', srv.name);
+      console.warn('no token or login/password is set for server:', srv.name); console.log(credentials);
       srv.broker.upsertServer(srv.name, {isLoggedIn:IsLoginStatus.error}); //srv.isLoggedIn = IsLoginStatus.error;
     }
 

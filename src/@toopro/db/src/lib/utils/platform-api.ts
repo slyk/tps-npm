@@ -45,7 +45,11 @@ class NodePlatformAPI implements IPlatformAPI {
         const fetchModule = await import('@web-std/fetch');
         this.NodeResponse = fetchModule.Response;
 
-        const streamModule = await import('stream/web');
+        // Изменить импорт на условный с помощью комментария для webpack
+        const streamModule = process?.versions?.node
+          ? await import(/* webpackIgnore: true */ 'stream/web')
+          : null;
+        if(streamModule==null) return;
         this.NodeReadableStream = streamModule.ReadableStream;
 
         this.isInitialized = true;

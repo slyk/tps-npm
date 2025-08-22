@@ -169,7 +169,15 @@ export class DB_BrokerService {
       console.error('cant login to server:', srv, credentials);
       return srv.isLoggedIn = IsLoginStatus.error;
     }
-    return loginFunction.call(srv.someService??this, srv);
+      //if credentials given in arguments - use them and save to srv object (rewrite if needed)
+    if(credentials) {
+        if(credentials.password && (srv.login!==credentials.login || srv.password!==credentials.password)) {
+            srv.login = credentials.login;  srv.password = credentials.password;
+        }
+        if(credentials.token && srv.token !== credentials.token) srv.token = credentials.token;
+    }
+    //actually login
+    return await loginFunction.call(srv.someService??this, srv, credentials);
   }
 
   /**

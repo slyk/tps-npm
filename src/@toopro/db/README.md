@@ -86,6 +86,9 @@ in your project and `npm unlink` in the package folder.
 
 
 ## release notes
+- 0.1.60 - login with credentials save
+- 0.1.59 - combine changes from two branches
+- 0.1.57 - remove warnings in angular apps
 - 0.1.58-nest - for nestjs only fix upsert() will merge to 0.1.57-angular next release
 - 0.1.57 - remove warning in angual / on other branch: upsert() can return T or error string (no undefined result)
 - 0.1.56 - refactor: update types and improve platform detection logic

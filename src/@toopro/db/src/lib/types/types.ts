@@ -85,7 +85,7 @@ export interface DB_ServerInfo<SDKT = object, T extends object = object> extends
    * we need to store it here so broker can call it when it has credentials
    * @see DB_EntityServiceBase.loginToServer
    */
-  loginFunction?: (srv?:DB_ServerInfo<T>) => Promise<IsLoginStatus>,
+  loginFunction?: (srv?:DB_ServerInfo<T>, credentials?:DB_Credentials) => Promise<IsLoginStatus>,
 
   /**
    * any of the service implementation to this server
