@@ -200,6 +200,7 @@ export abstract class CacheBaseService<T> {
    */
   public cacheGet(id:DB_EntityID):T|null|undefined {
     if(!this.cache) return undefined;
+    //console.log('cacheGet', id, this.cachedItems, `last loaded item: ${this.cacheLastLoadedItemID}`, this.cacheLastLoadedItem);
     if(id === this.cacheLastLoadedItemID) return this.cacheLastLoadedItem;
     return this.cachedItems.get(id);
   }

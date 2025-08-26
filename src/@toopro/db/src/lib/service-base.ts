@@ -259,9 +259,12 @@ export abstract class DB_EntityService_Base<T extends Record<string, any>> exten
   }
 
   /**
-   * in some cases we can get data from cache without request to server
-   * even on query with filters (id, and fields if we have index for them)
+   * in some cases we can get data from cache without a request to server
+   * even on a query with filters (id, and fields if we have index for them)
    * @param query
+   * @return array of items from cache or
+   *  - undefined if there is no items in cache and we don't know if they are on server
+   *  - null if we had the request to server and we know that there no items for this query
    */
   public cacheQuery(query:I_DB_Query):T[]|null|undefined {
 
@@ -279,7 +282,7 @@ export abstract class DB_EntityService_Base<T extends Record<string, any>> exten
       if(typeof idFilter === 'object' && idFilter._in && Array.isArray(idFilter._in)) {
         const retArr:T[] = [];
         for(const id of idFilter._in) {
-          const item = this.cacheGet(id);
+          const item = this.cacheGet(id); //console.log('cache get id',id,item, typeof item);
           if(item) retArr.push(item); else return undefined;//if we have at least one item not in cache - return undefined
         }
         return retArr;
@@ -379,7 +382,7 @@ export abstract class DB_EntityService_Base<T extends Record<string, any>> exten
 
   async getByIds(ids: DB_EntityID[], fields?:Array< Extract<keyof T,string> | string >): Promise<T[]> {
     const q = dbqb<T>().in(this.idFieldName, ids).limit(ids.length);
-    if(fields) q.fields(fields);
+    if(fields && fields.length) q.fields(fields);
     return await this.query(q);
   }
 
@@ -569,14 +572,16 @@ export abstract class DB_EntityService_Base<T extends Record<string, any>> exten
     for(const entity of forEntities) {
       for(const field of forFields) {
         //get only deep fields for the current field ([nested.id, nested.fld] will be only [id,fld])
-        const fields = queryFields.filter(f => f.split('.')[0] === field).map(f => f.split('.')[1]);
+        const fields = queryFields.filter(f => f.includes('.') && f.split('.')[0] === field).map(f => f.split('.')[1]);
         const entityType = (this.deepFields as any)[field] as string;
         const val = (entity as any)[field as string];
         const ids = Array.isArray(val) ? val : [val]; //there somehow could be objects already
-        const fieldEntities = await this._loadDeepField(entityType, ids, fields);
+        const fieldEntities = await this._loadDeepField(entityType, ids, fields.length?fields:undefined);
         if(!fieldEntities) {      //skip if no entities found
           if(ids.length>0) this.log(`Deep field '${field}' NOT found for entity '${this.entityName}' with IDs:`, DB_VerboseLevel.WARN, ids);
           continue;
+        } else {
+            this.log(`DB Srvc '${this.entityName}.${field}': loaded deep entity data:`, DB_VerboseLevel.TRACE, fieldEntities);
         }
         (entity as any)[field as string] = Array.isArray(val) ? fieldEntities : fieldEntities[0];
       }
@@ -584,9 +589,10 @@ export abstract class DB_EntityService_Base<T extends Record<string, any>> exten
     return forEntities;
   }
   private async _loadDeepField(entityType:string, ids:DB_EntityID[], fields?:string[]) {
-    this.log(`DB Srvc '${this.entityName}': loading deep '${entityType}' with IDs:`, DB_VerboseLevel.DEBUG, ids);
+    this.log(`DB Srvc '${this.entityName}': loading deep '${entityType}' with IDs:`+ids.join(',')+' | fields: ', DB_VerboseLevel.DEBUG, fields);
     const srvc = this.srvInfo.broker.getServiceByEntity(entityType);
     if(!srvc) {this.retErrorString(new DB_Error(`Service for ${entityType} NOT found for deep loading entity.`,'',DB_ErrorLevel.ERROR)); return null; }
+    if(srvc.srvInfo.isLoggedIn <= 0) {new DB_Error(`Can't load deep entity ${entityType} - not logged in to server '${srvc.srvInfo.name}'`, entityType,DB_ErrorLevel.ERROR); return null; }
     if(srvc.srvInfo.name === this.srvInfo.name) this.log(`DB Srvc '${this.entityName}': deep field ${entityType} is on the same server, better switch to normal query.`, DB_VerboseLevel.WARN, this.srvInfo.name);
 
     //sometimes we could have objects already in `ids` array
@@ -604,6 +610,7 @@ export abstract class DB_EntityService_Base<T extends Record<string, any>> exten
       this.log(`DB Srvc '${this.entityName}': deep field ${entityType} has wrong IDs: `, DB_VerboseLevel.ERROR, ids);
       return null;
     }
+    this.log(`DB Srvc '${this.entityName}': loading deep '${entityType}' with real IDs: `+realIds.join(',')+' | fields: ', DB_VerboseLevel.TRACE, fields);
     return await srvc.getByIds(realIds, fields);
   }
 

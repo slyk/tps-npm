@@ -236,8 +236,11 @@ export abstract class DB_EntityServiceBase_Directus<T extends DB_EntityBase<obje
 
     //try to load from cache
     if(this.cache && !query?.skipCache) {
-      res = this.cacheQuery(query) ?? [];
-      if(res !== undefined) return res;
+      const fromCache = this.cacheQuery(query);
+      if(fromCache !== undefined) {
+          this.log(`DB Srvc query ${this.entityName} from cache: `, DB_VerboseLevel.DEBUG, fromCache);
+          return fromCache??[]; //if res is null the empty array will be returned
+      }
     }
 
     //remove deep fields from a query (they are on another server, so it would be an error)
@@ -266,10 +269,11 @@ export abstract class DB_EntityServiceBase_Directus<T extends DB_EntityBase<obje
         );
       } catch (e2) {
         res = [];
-        this.log(`Query error after relogin attempt: ${e2}`, DB_VerboseLevel.ERROR);
+        this.log(`Query error after re-login attempt: ${e2}`, DB_VerboseLevel.ERROR);
       }
 
     }
+    //console.log('query result:', query, res);
 
     //base class standard post-process of query results
     if(res) await this._query_post_process(query, res);

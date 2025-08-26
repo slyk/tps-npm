@@ -86,6 +86,7 @@ in your project and `npm unlink` in the package folder.
 
 
 ## release notes
+- 0.1.61 - fix error with cache undefined!=null
 - 0.1.60 - login with credentials save
 - 0.1.59 - combine changes from two branches
 - 0.1.57 - remove warnings in angular apps
