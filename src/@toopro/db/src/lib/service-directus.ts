@@ -46,23 +46,40 @@ export abstract class DB_EntityServiceBase_Directus<T extends DB_EntityBase<obje
   declare srvInfo:DB_ServerInfo_Directus<T>;
 
   /**
-   * Helper function to handle permission errors by attempting to relogin
-   * and retry the operation.
+   * Helper function to handle known errors by attempting to re-login or retry the operation.
+   * Handles permission errors, token issues, invalid credentials, and server pressure/unavailability.
    *
-   * @param errStr The error string to check for permission/token issues
-   * @param operation The operation to retry if relogin is successful
-   * @returns The result of the operation or the error string
+   * @param errStr The error string to check for known issues
+   * @param operation The operation to retry if re-login or wait is successful
+   * @returns The result of the operation or throws a DB_Error
    * @private
    */
-  private async handlePermissionError<R>( errStr: string, operation: () => Promise<R> ): Promise<R> {
+  private async handleKnownErrors<R>(errStr: string, operation: () => Promise<R>): Promise<R> {
+
+      // Check for server pressure or unavailable errors
+    if (
+      errStr.includes('under pressure') ||
+      errStr.includes('unavailable') ||
+      errStr.includes('rate limit') ||
+      errStr.includes('too many requests')
+    ) {
+      await new Promise(res => setTimeout(res, 5000));
+      return await operation();
+    }
+
     // Check if the error is related to permissions, token, or credentials
-    if (errStr.includes('permission') || errStr.includes('token') || errStr.includes('Invalid user credentials')) {
+    if (
+      errStr.includes('permission') ||
+      errStr.includes('token') ||
+      errStr.includes('Invalid user credentials')
+    ) {
       this.srvInfo.isLoggedIn = IsLoginStatus.ndef; // Reset login status
       const loginStatus = await this.login();
       // If login was successful, retry the operation; ELSE throw with original error
       if (loginStatus === IsLoginStatus.yes) return await operation();
     }
-    // If not a permission error or login failed, throw the original error string
+
+    // If not a known error or login failed, throw the original error string
     throw new DB_Error(errStr);
   }
 
@@ -264,7 +281,7 @@ export abstract class DB_EntityServiceBase_Directus<T extends DB_EntityBase<obje
       const errStr = this.retErrorString(e);
       // Handle permission error and retry the operation if re-login is successful
       try {
-        res = await this.handlePermissionError<T[]>(
+        res = await this.handleKnownErrors<T[]>(
           errStr, async () => await this.srvInfo.i?.request((readItemsFunction as any).call(this,query)) as unknown as T[]
         );
       } catch (e2) {
@@ -397,7 +414,7 @@ export abstract class DB_EntityServiceBase_Directus<T extends DB_EntityBase<obje
 
         // Handle permission error and retry the operation if relogin is successful
         try {
-          res = await this.handlePermissionError<T>(
+          res = await this.handleKnownErrors<T>(
             errStr,
             async () => await this.srvInfo!.i!.request(createItem(this.entityName, entityOrArray as any)) as any as Promise<T>
           );
@@ -414,7 +431,7 @@ export abstract class DB_EntityServiceBase_Directus<T extends DB_EntityBase<obje
 
         // Handle permission error and retry the operation if relogin is successful
         try {
-          tArr = await this.handlePermissionError<T[]>(
+          tArr = await this.handleKnownErrors<T[]>(
             errStr,
             async () => await this.srvInfo!.i!.request(createItems(this.entityName, entityOrArray)) as any as Promise<T[]>
           );

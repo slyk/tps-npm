@@ -86,6 +86,7 @@ in your project and `npm unlink` in the package folder.
 
 
 ## release notes
+- 0.1.62 - handle 503 'under pressure' errors by waaing 5 seconds and retrying the operation
 - 0.1.61 - fix error with cache undefined!=null
 - 0.1.60 - login with credentials save
 - 0.1.59 - combine changes from two branches
