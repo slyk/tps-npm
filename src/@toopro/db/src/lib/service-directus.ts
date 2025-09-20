@@ -103,7 +103,7 @@ abstract class DB_EntityServiceBase_Directus<T extends DB_EntityBase<object>|obj
   // SERVER IMPLEMENTATION FUNCTIONS
 
   //for angular you should set this to 'cookies' to make it work
-  public static AUTH_MODE:AuthenticationMode  = 'json';
+  public static AUTH_MODE:AuthenticationMode|'json'|'session'  = 'json';
 
   /**
    * make it static, because db-broker will need to log in server without creating
@@ -112,7 +112,7 @@ abstract class DB_EntityServiceBase_Directus<T extends DB_EntityBase<object>|obj
    * @param toServer
    * @param credentials
    */
-  static override async loginToServer(toServer:DB_ServerInfo_Directus, credentials?:DB_Credentials & {options?:{auth_mode:AuthenticationMode}}):Promise<IsLoginStatus> {
+  static override async loginToServer(toServer:DB_ServerInfo_Directus, credentials?:DB_Credentials & {options?:{auth_mode?:AuthenticationMode}}):Promise<IsLoginStatus> {
     const srv = toServer;  if(!srv) return IsLoginStatus.error;
     if(srv.isLoggedIn > IsLoginStatus.ndef) return srv.isLoggedIn;
     console.log('login to server:', srv.name, srv.isLoggedIn, ' login: ', credentials?.login);
@@ -126,7 +126,7 @@ abstract class DB_EntityServiceBase_Directus<T extends DB_EntityBase<object>|obj
       return srv.isLoggedIn;
     }
 
-    //prepare credentials
+    //prepare credentials //TODO: move credentions to srv object as prop (not extend them)
     if(credentials) {
       //if credentials given in arguments - use them and save to srv object (rewrite if needed)
       if(credentials.password && (srv.login!==credentials.login || srv.password!==credentials.password)) {
@@ -134,9 +134,11 @@ abstract class DB_EntityServiceBase_Directus<T extends DB_EntityBase<object>|obj
         srv.password = credentials.password;
       }
       if(credentials.token && srv.token !== credentials.token) srv.token = credentials.token;
+      if(credentials.options) srv.options = credentials.options;
     } else {
       //else take credentials from srv object
       credentials = {login:srv.login, password:srv.password, token:srv.token};
+      if(srv.options) credentials.options = srv.options;
     }
 
     //'json' | 'cookie' | 'session' depend on environment.
@@ -518,4 +520,5 @@ abstract class DB_EntityServiceBase_Directus<T extends DB_EntityBase<object>|obj
   //////////////////////////////////////////////////////////////////////////////
 }
 
-export default DB_EntityServiceBase_Directus
+export { DB_EntityServiceBase_Directus };
+export default DB_EntityServiceBase_Directus;
