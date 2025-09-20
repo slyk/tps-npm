@@ -32,8 +32,20 @@ export interface DB_Credentials {
   token?: string,
   // url of the server
   url?: string
-  // options (depend on the server type)
-  options?: Record<string, any>
+  /**
+   * additional config (depend on server SDK adapter)
+   */
+  options?: Record<string, any> & {
+      // used to set auth_mode (cookie or json) to directus SDK,
+      // depend on the platform used (browser or nodejs)
+      auth_mode?: 'cookie' | 'json',
+      // used to tell broker that we already deal with login,
+      // depend on adapter it should just re-check that auth is working.
+      // mostly you set IsLoginStatus.waiting here, so the login function of sdk
+      // then confirm that it really have access, and then set the isLoggedIn to IsLoginStatus.yes
+      // and also send notifications to subscribers about login success.
+      isLoggedIn?: IsLoginStatus,
+  }
 }
 
 /**

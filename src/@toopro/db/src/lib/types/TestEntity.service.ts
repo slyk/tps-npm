@@ -1,6 +1,6 @@
 import { DB_BrokerService } from '../broker.service.js';
 import { DB_EntityID } from './types.js';
-import { DB_EntityServiceBase_Directus } from '../service-directus.js';
+import DB_EntityServiceBase_Directus from '../service-directus.js';
 import { DB_EntityBase } from './db-entity-base.js';
 import { DB_EntityService_Options } from './service-options.interface.js';
 

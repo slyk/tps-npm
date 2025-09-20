@@ -1,6 +1,6 @@
-import { IsLoginStatus, DB_ServerInfo, DB_ServerNamesStd, ServersConfigHash, DB_Credentials } from './types/types.js';
-import { DB_EntityService_Base } from './service-base.js';
-import { DB_EntityServiceBase_Directus } from './service-directus.js';
+import {DB_Credentials, DB_ServerInfo, DB_ServerNamesStd, IsLoginStatus, ServersConfigHash} from './types/types.js';
+import {DB_EntityService_Base} from './service-base.js';
+import DB_EntityServiceBase_Directus from './service-directus.js';
 
 /**
  * Service to manage multiple directus servers and login to them
@@ -59,10 +59,10 @@ export class DB_BrokerService {
   }
 
   /**
-   * Add/update server to broker with optional auto-login.
+   * Add/update a server to broker with optional auto-login.
    *
-   * Also broker internally need to use this function to, so any changes
-   * to server will be send to subscrbers.
+   * Also broker internally needs to use this function to do ANY changes to server,
+   * to tell subscribers that changes were made.
    *
    * @param serverNameOrFullSrv could be:
    *    - **string** server name to change and then
@@ -124,7 +124,10 @@ export class DB_BrokerService {
     const srv = srvRef;
     if(doLogin && srv.isLoggedIn<=0 &&
       (!!srv.loginFunction || !!srv.someService) &&
-      (realChanges.login || realChanges.password || realChanges.token )
+      (
+        realChanges.login || realChanges.password || realChanges.token ||           //if we have credentials - login
+        (realChanges.options?.isLoggedIn??IsLoginStatus.error)>IsLoginStatus.not    //or maybe we are already logged in (externally processed) then _loginServer() should just confirm this status
+      )
     ) {
       //if we are not logged in or credentials changed - login
       this._loginServer(srv).then(()=>console.log(`DB auto login ${serverName} done (in broker)`));

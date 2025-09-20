@@ -37,7 +37,7 @@ import {platformIsBrowser} from "./utils/platform-api.js";
  * Directus SDK: specific implementation of the DB_EntityServiceBase,
  * to load entities from Directus servers
  */
-export abstract class DB_EntityServiceBase_Directus<T extends DB_EntityBase<object>|object> extends DB_EntityService_Base<T> implements I_DB_EntityServiceBase<T> {
+abstract class DB_EntityServiceBase_Directus<T extends DB_EntityBase<object>|object> extends DB_EntityService_Base<T> implements I_DB_EntityServiceBase<T> {
 
   /**
    * server info used for this entity (url, credentials, etc.)
@@ -142,7 +142,7 @@ export abstract class DB_EntityServiceBase_Directus<T extends DB_EntityBase<obje
     //'json' | 'cookie' | 'session' depend on environment.
     //if we see that we are in browser - use 'cookie' auth mode
     //if we are in Node.js - use 'json' auth mode
-    let authMode:AuthenticationMode = platformIsBrowser ? 'cookie' : 'json';
+    let authMode:AuthenticationMode = platformIsBrowser ? 'session' : 'json';
     if(credentials.options?.auth_mode) authMode = credentials.options.auth_mode;
 
     //if we are not logged in - try to log in and tell that we are waiting
@@ -176,6 +176,16 @@ export abstract class DB_EntityServiceBase_Directus<T extends DB_EntityBase<obje
         console.error('login error2:', e, srv);
         srv.broker.upsertServer(srv.name, {isLoggedIn:IsLoginStatus.not}); //srv.isLoggedIn = IsLoginStatus.not;
       }
+    //maybe we have already asked to set some isLoggedIn status, we ask directus to refresh()
+    } else if (credentials.options?.isLoggedIn !== undefined && credentials.options?.isLoggedIn > IsLoginStatus.not) {
+        try {
+            const refreshed = await srv.i.refresh();
+            if(refreshed) srv.broker.upsertServer(srv.name, {isLoggedIn:IsLoginStatus.yes}); //srv.isLoggedIn = IsLoginStatus.yes;
+            else throw new Error('refresh error');
+        } catch (e) {
+            console.error('login error3:', e);
+            srv.broker.upsertServer(srv.name, {isLoggedIn:IsLoginStatus.not});
+        }
     //ELSE we can't login without token or login/password:
     } else {
       console.warn('no token or login/password is set for server:', srv.name); console.log(credentials);
@@ -507,3 +517,5 @@ export abstract class DB_EntityServiceBase_Directus<T extends DB_EntityBase<obje
   //////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
 }
+
+export default DB_EntityServiceBase_Directus
