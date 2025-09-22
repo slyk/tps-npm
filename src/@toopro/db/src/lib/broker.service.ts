@@ -238,7 +238,7 @@ export class DB_BrokerService {
 
     if(ret) {
       //add entityName to an entity list (just for info)
-      if(ret.entities && !(entityName in ret.entities)) ret.entities.push(entityName);
+      if(ret.entities && ret.entities.indexOf(entityName)<0) ret.entities.push(entityName);
       //save entityService instance (maybe will need it later)
       if(serviceInstance) this.serviceByEntity[entityName] = serviceInstance;
     }
@@ -281,11 +281,26 @@ export class DB_BrokerService {
 
   private notifyServerUpdates(serverName:DB_ServerNamesStd|string, updates:Partial<DB_ServerInfo>, fullSrv?:DB_ServerInfo) {
     if(!fullSrv) fullSrv = this.getServer(serverName);
+
+    // To prevent external state managers (e.g., NgRx store-freeze) from freezing our live server objects
+    // and making them read-only in the broker, we always emit cloned copies to subscribers.
+    const cloneServer = (s?: DB_ServerInfo) => {
+      if(!s) return undefined as unknown as DB_ServerInfo;
+      return {
+        ...s,
+        // shallow clone nested objects/arrays that are commonly mutated or observed
+        options: s.options ? { ...s.options } : s.options,
+        //user: s.user ? { ...s.user, __data: s.user.__data ? { ...(s.user.__data as object) } : s.user.__data } : s.user,
+        //entities: s.entities ? [...s.entities] : s.entities,
+      } as DB_ServerInfo;
+    };
+    const fullSrvCloned = cloneServer(fullSrv);
+
     const subs = this.serverUpdatesSubscribers.get(serverName);
-    if(subs) subs.forEach(sub => setTimeout(() => sub(updates, fullSrv), 0));
+    if(subs) subs.forEach(sub => setTimeout(() => sub(updates, fullSrvCloned), 0));
     //notify -any- too
     const subsAny = this.serverUpdatesSubscribers.get('-any-');
-    if(subsAny) subsAny.forEach(sub => setTimeout(() => sub(updates, fullSrv), 0));
+    if(subsAny) subsAny.forEach(sub => setTimeout(() => sub(updates, fullSrvCloned), 0));
   }
 
   private getChanges(oldSrv: Partial<DB_ServerInfo>, newSrv: Partial<DB_ServerInfo>): Partial<DB_ServerInfo> {

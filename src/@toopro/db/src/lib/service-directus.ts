@@ -112,7 +112,7 @@ abstract class DB_EntityServiceBase_Directus<T extends DB_EntityBase<object>|obj
    * @param toServer
    * @param credentials
    */
-  static override async loginToServer(toServer:DB_ServerInfo_Directus, credentials?:DB_Credentials & {options?:{auth_mode?:AuthenticationMode}}):Promise<IsLoginStatus> {
+  static override async loginToServer(toServer:DB_ServerInfo_Directus, credentials?:DB_Credentials):Promise<IsLoginStatus> {
     const srv = toServer;  if(!srv) return IsLoginStatus.error;
     if(srv.isLoggedIn > IsLoginStatus.ndef) return srv.isLoggedIn;
     console.log('login to server:', srv.name, srv.isLoggedIn, ' login: ', credentials?.login);
@@ -126,7 +126,7 @@ abstract class DB_EntityServiceBase_Directus<T extends DB_EntityBase<object>|obj
       return srv.isLoggedIn;
     }
 
-    //prepare credentials //TODO: move credentions to srv object as prop (not extend them)
+    //prepare credentials //TODO: move credentials to srv object as prop (not extend them)
     if(credentials) {
       //if credentials given in arguments - use them and save to srv object (rewrite if needed)
       if(credentials.password && (srv.login!==credentials.login || srv.password!==credentials.password)) {
@@ -134,7 +134,7 @@ abstract class DB_EntityServiceBase_Directus<T extends DB_EntityBase<object>|obj
         srv.password = credentials.password;
       }
       if(credentials.token && srv.token !== credentials.token) srv.token = credentials.token;
-      if(credentials.options) srv.options = credentials.options;
+      //if(credentials.options) srv.options = credentials.options; //"Cannot assign to read only property 'options' of object '[object Object]'"
     } else {
       //else take credentials from srv object
       credentials = {login:srv.login, password:srv.password, token:srv.token};
