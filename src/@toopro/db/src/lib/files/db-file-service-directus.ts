@@ -1,10 +1,10 @@
 import { I_DB_FilesService } from './db-files-service.interface.js';
 import { DB_EntityID, DB_ServerInfo_Directus } from '../types/types.js';
 import { I_DB_File, I_DB_FileOptions } from './file.types.js';
-import { readAssetRaw, updateFile, uploadFiles } from '@directus/sdk';
+import { updateFile, uploadFiles } from '@directus/sdk';
 import { DB_BrokerService } from '../broker.service.js';
 import { platformAPI } from "../utils/platform-api.js";
-import {IFormData, IReadableStream} from "../utils/platform-types.js";
+import { IFormData } from "../utils/platform-types.js";
 declare global {
   interface FormData {
     append(name: string, value: string | Blob, fileName?: string): void;
@@ -40,28 +40,67 @@ export class DB_FileService_Directus implements I_DB_FilesService<I_DB_File> {
     return res;
   }
 
-  async getContents(file: I_DB_File | DB_EntityID): Promise<object> {
-    const fileId:string = (typeof file === 'object') ? String(file.id ?? '') : String(file);
-    //const q:DB_Query<I_DB_File> = {filter:{id:{_eq:fileId}}};
+  async getContents(file: I_DB_File | DB_EntityID): Promise<object | null> {
+    const fileId: string = (typeof file === 'object') ? String(file.id ?? '') : String(file);
 
     //check if we have server instance
     //we did not have login function in this service so ust wait
     //add timeout to wait for server to be ready 2 seconds
-    if(!this.srvInfo || !this.srvInfo.i) {
+    if (!this.srvInfo || !this.srvInfo.i) {
       await new Promise(resolve => setTimeout(resolve, 2000));
-      if(!this.srvInfo || !this.srvInfo.i) {
-        console.error('ERR: @toopro/db file read: no server instance',file, DB_BrokerService.i);
+      if (!this.srvInfo || !this.srvInfo.i) {
+        console.error('ERR: @toopro/db file read: no server instance', file, DB_BrokerService.i);
+        return null;
       }
     }
 
-    let ret = null;
     try {
-      const stream = await this.srvInfo!.i!.request(readAssetRaw(fileId));
-      if(stream) ret = await DB_FileService_Directus.readableStreamToText(stream);
+      let url = await this.getURL(fileId);
+      if (!url) {
+        console.error('ERR: @toopro/db file read: Failed to get URL for file', fileId);
+        return null;
+      }
+
+      // Ensure fetch is available (polyfill for non-browser environments if needed)
+      const g: any = globalThis as any;
+      if (!g.fetch) {
+        try {
+          const polyfill = await import('@web-std/fetch');
+          g.fetch = (polyfill as any).fetch ?? (polyfill as any).default ?? g.fetch;
+        } catch (polyErr) {
+          console.error('ERR: fetch is not available and polyfill failed to load', polyErr);
+          return null;
+        }
+      }
+
+      // Prepare auth:
+      // - Always include cookies when possible (browser)
+      // - Add Bearer token header when a token exists (srvInfo.user.token or srvInfo.token)
+      const headers: Record<string, string> = {};
+      const token = this.srvInfo.user?.token ?? this.srvInfo.token;
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      // Use "any" for RequestInit to avoid TS issues in Node typings (credentials not in undici types)
+      const init: any = {
+        method: 'GET',
+        headers,
+        credentials: 'include',
+      };
+
+      const response = await g.fetch(url, init);
+      if(!response)   { console.error('ERR: @toopro/db file read: Empty response for file', fileId); return null;  }
+      if(!response.ok){ console.error('ERR: @toopro/db file read: HTTP status', response.status, 'for file', fileId); return null; }
+
+      const contentType = response.headers?.get?.('content-type') || '';
+      if (contentType.includes('application/json')) return await response.json();
+      else {
+        const text = await response.text();
+        try { return JSON.parse(text); } catch { return text as unknown as object; }
+      }
     } catch (e) {
-      console.error('ERR: @toopro/db file read: ',e);
+      console.error('ERR: @toopro/db file read (fetch):', e);
+      return null;
     }
-    return ret as unknown as object;
   }
 
   async getURL(file: DB_EntityID | I_DB_File): Promise<string> {
@@ -123,23 +162,5 @@ export class DB_FileService_Directus implements I_DB_FilesService<I_DB_File> {
       formData.append(key, data as string);
     }
     return formData;
-  }
-
-  private static async readableStreamToText(stream:IReadableStream) {
-    const reader = stream.getReader();
-    const decoder = new TextDecoder();
-    let result = '';
-    let done = false;
-
-    while (!done) {
-      const { value, done: doneReading } = await reader.read();
-      done = doneReading;
-      if (value) {
-        result += decoder.decode(value, { stream: true });
-      }
-    }
-
-    result += decoder.decode(); // flush the decoder
-    return result;
   }
 }

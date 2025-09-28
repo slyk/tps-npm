@@ -7,9 +7,6 @@ export interface IResponse {
   blob(): Promise<Blob>;
 }
 
-export interface IReadableStream {
-  getReader(): any;
-}
 
 export interface IPlatformAPI {
   createFormData(): Promise<IFormData>;

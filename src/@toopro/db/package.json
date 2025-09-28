@@ -1,6 +1,6 @@
 {
   "name": "@toopro/db",
-  "version": "0.1.63",
+  "version": "0.1.65",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -27,7 +27,6 @@
   },
   "optionalDependencies": {
     "formdata-node": "^6.0.3",
-    "@web-std/fetch": "^4.2.1",
-    "stream": "^0.0.3"
+    "@web-std/fetch": "^4.2.1"
   }
 }

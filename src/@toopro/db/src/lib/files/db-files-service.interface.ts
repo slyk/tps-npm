@@ -19,7 +19,7 @@ export interface I_DB_FilesService<FILE_OBJ_TYPE> {
    * read files from remote server to object
    * @param file
    */
-  getContents(file:FILE_OBJ_TYPE|DB_EntityID): Promise<object>;
+  getContents(file:FILE_OBJ_TYPE|DB_EntityID): Promise<object | null>;
 
   /**
    * return public url to the files

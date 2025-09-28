@@ -1,4 +1,4 @@
-import { IPlatformAPI, IFormData, IResponse, IReadableStream } from './platform-types.js';
+import { IPlatformAPI, IFormData, IResponse } from './platform-types.js';
 
 class BrowserPlatformAPI implements IPlatformAPI {
   async createFormData(): Promise<IFormData> {
@@ -17,7 +17,6 @@ class BrowserPlatformAPI implements IPlatformAPI {
 class NodePlatformAPI implements IPlatformAPI {
   private NodeFormData: any;
   private NodeResponse: any;
-  private NodeReadableStream: any;
   private isInitialized = false;
   private initPromise: Promise<void>;
 
@@ -44,13 +43,6 @@ class NodePlatformAPI implements IPlatformAPI {
 
         const fetchModule = await import('@web-std/fetch');
         this.NodeResponse = fetchModule.Response;
-
-        // Изменить импорт на условный с помощью комментария для webpack
-        const streamModule = process?.versions?.node
-          ? await import(/* webpackIgnore: true */ 'stream/web')
-          : null;
-        if(streamModule==null) return;
-        this.NodeReadableStream = streamModule.ReadableStream;
 
         this.isInitialized = true;
       } catch (e) {
@@ -87,11 +79,7 @@ class NodePlatformAPI implements IPlatformAPI {
   async isReadableStream(obj: any): Promise<boolean> {
     await this.initPromise;
 
-    if (this.NodeReadableStream) {
-      return obj instanceof this.NodeReadableStream;
-    }
-
-    // Фолбэк для браузера или если модуль не загрузился
+    // Проверка только для глобального ReadableStream в среде выполнения
     return !!(globalThis as any).ReadableStream && obj instanceof (globalThis as any).ReadableStream;
   }
 }
