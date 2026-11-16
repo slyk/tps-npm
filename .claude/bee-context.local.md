@@ -1,6 +1,6 @@
 # Plan for a mixed d9 and Directus 11 deployment
 
-Branch codex/d9-rest-plan, based on 14dfd02. The selection unit is a named server registered with DB_BrokerService. Keep DBtype.directus as the v11 default and add DBtype.d9 as an explicit opt-in. The first target server and its authentication requirements are open.
+Branch codex/d9-rest-plan, based on 14dfd02. The selection unit is a named server registered with DB_BrokerService. Keep DBtype.directus as the v11 default and add DBtype.d9 as an explicit opt-in. The first acceptance target is the existing supply d9 server at https://tps-supply.nfeya.org. Its application clients and production authentication requirements are open.
 
 ## Implementation order
 
@@ -21,3 +21,7 @@ Branch codex/d9-rest-plan, based on 14dfd02. The selection unit is a named serve
 ## MySQL
 
 Scope a separate server-side adapter once a concrete consumer and schema are known. Define parameterized query and identifier handling, relation metadata, field selection, sort, filters, pagination, mutation and transaction semantics, and error mapping. Decide which permissions, hooks, files and authentication semantics callers require. Angular must reach it through a server API. Keep the mysql placeholder unsupported in the d9 branch.
+
+## Supply acceptance evidence
+
+The installed @directus/sdk 20.1.0 passed a live Node REST probe using a static admin token. It read the current user, created a transient collection and two items, filtered and sorted projected fields, bulk-updated both rows, deleted one matching row with a limit of one, and deleted the remaining row by ID. Collection cleanup was verified by listing the schema. This was a transport probe. Mixed-broker routing, restricted permissions, relations, files, and browser sessions still need coverage. No supply registration was found in the two apps' apps/ or libs/ source trees.
