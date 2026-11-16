@@ -174,8 +174,8 @@ abstract class DB_EntityServiceBase_Directus<T extends DB_EntityBase<object>|obj
         authData = await srv.i.login({email:credentials.login, password:credentials.password});
         //console.log('login result:', res);
         srv.broker.upsertServer(srv.name, {isLoggedIn:IsLoginStatus.yes}); //srv.isLoggedIn = IsLoginStatus.yes;
-      } catch (e) {
-        console.error('login error2:', e, srv);
+      } catch {
+        console.error('Password login failed for server:', srv.name);
         srv.broker.upsertServer(srv.name, {isLoggedIn:IsLoginStatus.not}); //srv.isLoggedIn = IsLoginStatus.not;
       }
     //maybe we have already asked to set some isLoggedIn status, we ask directus to refresh()
@@ -190,7 +190,7 @@ abstract class DB_EntityServiceBase_Directus<T extends DB_EntityBase<object>|obj
         }
     //ELSE we can't login without token or login/password:
     } else {
-      console.warn('no token or login/password is set for server:', srv.name); console.log(credentials);
+      console.warn('no token or login/password is set for server:', srv.name);
       srv.broker.upsertServer(srv.name, {isLoggedIn:IsLoginStatus.error}); //srv.isLoggedIn = IsLoginStatus.error;
     }
 
@@ -499,11 +499,14 @@ abstract class DB_EntityServiceBase_Directus<T extends DB_EntityBase<object>|obj
 
   async batchDelete(query:I_DB_Query<T>|DB_QueryBuilder<T>):Promise<boolean|string> {
     if(this.readonly) return this.retErrorString(new DB_Error(`[tps/db] ${this.entityName} is readonly`,this.entityName,'',DB_ErrorLevel.WARNING));
-    if(!query.limit) return this.retErrorString('limit must be set in query for batch delete');
     this.lastErrorReset();
 
     //if we have a queryBuilder instance given - convert it to a directus query
     if(query instanceof DB_Query) query = query.for(DBtype.directus);
+    const limit = query.limit;
+    if (typeof limit !== 'number' || !Number.isSafeInteger(limit) || limit <= 0) {
+      return this.retErrorString('A positive integer limit must be set in query for batch delete');
+    }
     this.log(`query ${this.entityName}: `, DB_VerboseLevel.DEBUG, query);
 
     //use deleteItems() function from directus SDK

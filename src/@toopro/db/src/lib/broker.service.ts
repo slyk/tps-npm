@@ -169,7 +169,7 @@ export class DB_BrokerService {
   private async _loginServer(srv: DB_ServerInfo, credentials?:DB_Credentials): Promise<IsLoginStatus> {
     const loginFunction = srv.loginFunction ?? (srv.someService ? srv.someService.login : null);
     if(!loginFunction) {
-      console.error('cant login to server:', srv, credentials);
+      console.error('No login function for server:', srv.name);
       return srv.isLoggedIn = IsLoginStatus.error;
     }
       //if credentials given in arguments - use them and save to srv object (rewrite if needed)

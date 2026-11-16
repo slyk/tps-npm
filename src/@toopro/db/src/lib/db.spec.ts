@@ -67,7 +67,6 @@ describe('TestEntityService (@toopro/db)', () => {
         stats: ['directus_roles'], // stats:test also added in TestEntityService
       },
     };
-    console.log('config:', config);
     //create broker
     dbBroker = new DB_BrokerService(config);
     dbBroker.subscribe('stats', onServerStatusUpdate);
