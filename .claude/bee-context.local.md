@@ -17,7 +17,9 @@ Branch codex/d9-rest-plan, based on 14dfd02. The selection unit is a named serve
 - Email/password. Test successful and rejected credentials, refresh after access-token expiry, simultaneous requests during refresh, logout and subsequent login. Exercise JSON in Node and the supported cookie-based mode in a browser.
 - Google SSO. The existing Angular flow supplies an SDK client after redirect. Preserve this handoff. Require a successful authenticated read after callback and browser reload, session refresh, logout, and recovery from an expired or cancelled flow. Run deterministic callback cases plus an end-to-end check against a configured provider before claiming live Google verification.
 - Resolve browser mode per named server. The current library defaults browsers to session. d9 documents json and cookie for login and refresh. Verify d9 cookie behavior independently of the existing v11 session client. [d9 authentication reference](https://d9.webcapsule.io/reference/authentication.html)
-- Open API decision: should callers supply the SDK client after redirect, or should the broker also offer provider URL generation and callback completion for a named server? In either case the application owns navigation and UI.
+- Provide two broker helpers for named servers and keep the existing injected-client path. The URL helper takes the server name, provider and application callback URL. Build from the registered server base URL, preserve any installation path, and encode the redirect exactly once. The caller navigates to the result.
+- The callback helper takes the server name, restores its browser session using the registered or library-created client, verifies the current user, then publishes the login outcome through existing broker subscriptions. Return the existing IsLoginStatus type. Cover repeat callbacks, denied or expired sessions and isolation from another signed-in server. Angular owns its callback route and UI.
+- Acceptance examples should exercise both the new two-call flow and the existing upsertServer handoff with an externally created SDK client.
 
 ## Review findings
 
