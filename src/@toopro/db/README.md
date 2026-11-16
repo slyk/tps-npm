@@ -1,6 +1,7 @@
 # db
 
-TS lib to work with databases (drupal, mysql, etc).
+TS lib to work with databases. Only Directus is implemented today (`DB_EntityServiceBase_Directus`); `DBtype` also
+lists other types, which have no implementation.
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/slyk/tps-npm)
 
